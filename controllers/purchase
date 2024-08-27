@@ -1,0 +1,45 @@
+import { ObjectId } from "mongodb";
+import dbase from "../utils/db.js";
+import redisClient from "../utils/redis.js";
+
+class purchases{
+    static async purchase(req, res){
+        const au = req.header('Authorization');
+        const token = au.split(" ")[1];
+        console.log(token);
+        const {id} = req.body;
+        const id_order = new ObjectId(id);
+        if(!id || !token){
+
+        }
+        else{
+            dbase.dd.collection('order').findOne({_id: id_order})
+            .then((result)=>{
+                const id_user = new ObjectId(result['iduser']);
+                console.log(id_user);
+                const id_product = new ObjectId(result['id']);
+                console.log(id_product);
+                redisClient.client.get(token)
+                .then((resultat)=>{
+                    console.log(typeof(resultat));
+                    if(id_user === resultat){
+                        console.log("im")
+                        const q = result.quantity;
+                        const p = result.produit;
+                        const ipdt = result.id;
+                        dbase.dd.collection('prurchae').insertOne({q,p,ipdt,id_user});
+                        
+                        
+                    }
+                    else{
+                        res.status(400).json({message:"you are not authorized"});
+                    }
+                })
+               
+            })        
+        }
+    }
+}
+
+
+export default purchases;
